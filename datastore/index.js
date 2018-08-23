@@ -33,12 +33,20 @@ exports.readOne = (id, callback) => {
 };
 
 exports.readAll = callback => {
-  var data = [];
-  fs.readdir(exports.dataDir, (err, items) => {
-    _.each(items, (item, idx) => {
-      data.push({ id: `0000${idx + 1}`, text: `0000${idx + 1}` });
+  fs.readdir(exports.dataDir, (err, fileNames) => {
+    var promises = fileNames.map(fileName => {
+      return new Promise((resolve, reject) => {
+        exports.readOne(fileName.slice(0, 5), (err, data) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(data);
+          }
+        });
+      });
     });
-    callback(null, data);
+
+    Promise.all(promises).then(items => callback(null, items));
   });
 };
 
