@@ -10,7 +10,9 @@ var items = {};
 exports.create = (text, callback) => {
   counter.getNextUniqueId((error, nextNumber) => {
     fs.writeFile(path.join(exports.dataDir, `${nextNumber}.txt`), text, err => {
-      if (err) throw err;
+      if (err) {
+        throw err;
+      }
       let todo = {
         id: nextNumber,
         text: text
@@ -57,14 +59,14 @@ exports.update = (id, text, callback) => {
 };
 
 exports.delete = (id, callback) => {
-  var item = items[id];
-  delete items[id];
-  if (!item) {
-    // report an error if item not found
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    callback();
-  }
+  fs.unlink(path.join(exports.dataDir, `${id}.txt`), error => {
+    if (error) {
+      // report an error if item not found
+      callback(new Error(`No item with id: ${id}`));
+    } else {
+      callback(null);
+    }
+  });
 };
 
 // Config+Initialization code -- DO NOT MODIFY /////////////////////////////////
