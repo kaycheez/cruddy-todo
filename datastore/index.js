@@ -8,44 +8,60 @@ var items = {};
 // Public API - Fix these CRUD functions ///////////////////////////////////////
 
 exports.create = (text, callback) => {
-  var id = counter.getNextUniqueId();
-  items[id] = text;
-  callback(null, {id: id, text: text});
+  counter.getNextUniqueId((error, nextNumber) => {
+    fs.writeFile(path.join(exports.dataDir, `${nextNumber}.txt`), text, err => {
+      if (err) throw err;
+      let todo = {
+        id: nextNumber,
+        text: text
+      };
+      callback(null, todo);
+    });
+  });
 };
 
 exports.readOne = (id, callback) => {
-  var item = items[id];
-  if (!item) {
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    callback(null, {id: id, text: item});
-  }
+  fs.readFile(path.join(exports.dataDir, `${id}.txt`), (err, data) => {
+    if (err) {
+      callback(new Error(`No item with id: ${id}`));
+    } else {
+      callback(null, { id: id, text: new Buffer(data).toString() });
+    }
+  });
 };
 
-exports.readAll = (callback) => {
+exports.readAll = callback => {
   var data = [];
-  _.each(items, (item, idx) => {
-    data.push({ id: idx, text: items[idx] });
+  fs.readdir(exports.dataDir, (err, items) => {
+    _.each(items, (item, idx) => {
+      data.push({ id: `0000${idx + 1}`, text: `0000${idx + 1}` });
+    });
+    callback(null, data);
   });
-  callback(null, data);
 };
 
 exports.update = (id, text, callback) => {
-  var item = items[id];
-  if (!item) {
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    items[id] = text;
-    callback(null, {id: id, text: text});
-  }
+  exports.readOne(id, (error, todo) => {
+    if (error) {
+      callback(new Error(`No item with id: ${id}`));
+    }
+    fs.writeFile(path.join(exports.dataDir, `${id}.txt`), text, error => {
+      let todo = {
+        id: id,
+        text: text
+      };
+      // console.log(todo);
+      callback(null, todo);
+    });
+  });
 };
 
 exports.delete = (id, callback) => {
   var item = items[id];
   delete items[id];
-  if(!item) {
+  if (!item) {
     // report an error if item not found
-    callback(new Error(`No item with id: ${id}`))
+    callback(new Error(`No item with id: ${id}`));
   } else {
     callback();
   }
