@@ -53,9 +53,12 @@ exports.readAll = callback => {
 exports.update = (id, text, callback) => {
   exports.readOne(id, (error, todo) => {
     if (error) {
-      callback(new Error(`No item with id: ${id}`));
+      return callback(new Error(`No item with id: ${id}`));
     }
     fs.writeFile(path.join(exports.dataDir, `${id}.txt`), text, error => {
+      if (error) {
+        return callback(error);
+      }
       let todo = {
         id: id,
         text: text
@@ -67,16 +70,14 @@ exports.update = (id, text, callback) => {
 };
 
 exports.delete = (id, callback) => {
-  fs.unlink(path.join(exports.dataDir, `${id}.txt`), error => {
-    if (error) {
-      // report an error if item not found
-      callback(new Error(`No item with id: ${id}`));
+  fs.unlink(`${exports.dataDir}/${id}.txt`, err => {
+    if (err) {
+      callback(err);
     } else {
       callback(null);
     }
   });
 };
-
 // Config+Initialization code -- DO NOT MODIFY /////////////////////////////////
 
 exports.dataDir = path.join(__dirname, 'data');
